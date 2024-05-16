@@ -1,19 +1,25 @@
 spring:
-  config:
-    import:
-      - file:.env[.properties]
   datasource:
-    url: jdbc:postgresql://localhost:${POSTGRES_PORT}/${POSTGRES_DB}
-    username: ${POSTGRES_USER}
-    password: ${POSTGRES_PASSWORD}
-#  datasource:
-#    url: jdbc:postgresql://localhost:5432/food-delivery-db
-#    username: food-delivery-user
-#    password: password
+    url: jdbc:postgresql://localhost:5432/food-delivery-db
+    username: postgres
+    password: password
   jpa:
     generate-ddl: true
     hibernate:
         ddl-auto: update
     open-in-view: true
-
-
+    show-sql: true
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+security:
+  jwt:
+    secret-key: cb6aaf8b196e046d9cccacebbf1f1cd3f6f34bbf46d6d48a2facab7ee08cfd895e7a31cd48a1c00a7f44675ff235365c418d434bece3dc66dc815c34d26c9cc69cccb4f56e1644a8047e98a2789e9f6bd36589db308e9af9f2297d864ae1f23ab8505bf7ef396c41df4abcc94191cb149c64d686e253a468e0bbc5d5b301c6b7
+    expiration: 3600000
+  super-admin:
+    email: secret@mail.com
+    password: 12345
+server:
+  port: 8000
