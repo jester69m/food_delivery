@@ -1,9 +1,11 @@
 package com.shop.controller;
 
+import com.shop.dto.OrderCreateMessage;
 import com.shop.dto.OrderDto;
 import com.shop.entity.Order;
 import com.shop.service.OrderService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,6 +16,12 @@ import org.springframework.web.bind.annotation.*;
 public class OrderController {
 
     private final OrderService orderService;
+    private final RabbitTemplate rabbitTemplate;
+
+    private final String orderQueueName = "q.order";
+    private final String exchangeName = "order.exchange";
+
+
 
     @GetMapping("/{orderId}")
     public ResponseEntity<?> getOrderById(@PathVariable Long orderId) {
@@ -29,6 +37,7 @@ public class OrderController {
     public ResponseEntity<?> createOrder(@RequestBody OrderDto order) {
         try {
             Order createdOrder = orderService.createOrder(order);
+            rabbitTemplate.convertAndSend(exchangeName, orderQueueName, new OrderCreateMessage(createdOrder.getId(), createdOrder.getUserEmail(), createdOrder.getOrderLines(), createdOrder.getOrderDate(), createdOrder.getTotalPrice()));
             return ResponseEntity.status(HttpStatus.CREATED).body(createdOrder);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());

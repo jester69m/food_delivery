@@ -66,22 +66,6 @@ public class UserController {
         List<User> users = userService.getAllUsers();
         return new ResponseEntity<>(users, HttpStatus.OK);
     }
-
-    @GetMapping("/hello")
-    public String hello() {
-        return "Hello World!";
-    }
-
-    @GetMapping("/hello2")
-    public String hello2() {
-        return "Hello World!";
-    }
-
-    @GetMapping("/hello3")
-    public String hello3() {
-        return "Hello World!";
-    }
-
 //    @GetMapping
 //    @PreAuthorize("hasRole('SUPER_ADMIN')")
 //    public ResponseEntity<?> getAllUsers(@RequestParam(defaultValue = "0") int page,

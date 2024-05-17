@@ -15,6 +15,8 @@ import java.util.List;
 @Getter
 @Setter
 @Table(name = "users")
+@EqualsAndHashCode
+@ToString
 public class User implements UserDetails {
 
     @Id

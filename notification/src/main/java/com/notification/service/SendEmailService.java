@@ -1,5 +1,6 @@
 package com.notification.service;
 
+import com.notification.dto.OrderCreateMessage;
 import com.notification.dto.UserRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -28,6 +29,17 @@ public class SendEmailService {
             log.error("Email is null");
         } else {
             log.info(String.format("Sending email to %s with message '%s'", email, "You have logged in!"));
+        }
+    }
+
+    @RabbitListener(queues = "q.order")
+    public void sendCreateOrderEmail(OrderCreateMessage message) {
+        if(message == null) {
+            log.error("Message is null");
+        } else if(message.getUserEmail() == null) {
+            log.info(String.format("Order created with id %s with content %s", message.getOrderId(), message));
+        } else {
+            log.info(String.format("Order created with id %s for user %s with content %s", message.getOrderId(), message.getUserEmail(), message));
         }
     }
 }

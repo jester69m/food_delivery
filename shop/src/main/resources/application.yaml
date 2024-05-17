@@ -9,9 +9,13 @@ spring:
       ddl-auto: update
     open-in-view: true
     show-sql: true
+  security:
+    user:
+        name: secret@mail.com
+        password: 12345
 
 server:
   port: 8002
 
 auth:
-  url: http://127.0.0.1:8000/auth/verify-token
+  url: http://127.0.0.1:8000/auth/verify-token/

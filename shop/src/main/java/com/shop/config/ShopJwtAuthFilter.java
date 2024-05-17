@@ -1,20 +1,19 @@
 package com.shop.config;
 
-import com.shop.dto.JwtRequest;
+import com.shop.dto.UserDetailsResponse;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -25,47 +24,36 @@ public class ShopJwtAuthFilter extends OncePerRequestFilter {
 
 
     @Value("${auth.url}")
-    private String authServiceUrl;
-
-    private final RestTemplate restTemplate;
-
-    public ShopJwtAuthFilter(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
-    }
+    private String authUrl;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-            throws ServletException, IOException {
-        final String authHeader = request.getHeader("Authorization");
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
+        String jwtToken = getJwtFromRequest(request);
 
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
+        if (StringUtils.hasText(jwtToken)) {
+            RestTemplate restTemplate = new RestTemplate();
+            ResponseEntity<UserDetailsResponse> responseEntity = restTemplate.getForEntity(authUrl + jwtToken, UserDetailsResponse.class);
 
-        try {
-            final String jwt = authHeader.substring(7);
-            ResponseEntity<UserDetails> userDetailsResponse = restTemplate.exchange(
-                    authServiceUrl + "/auth/verify-token",
-                    HttpMethod.GET,
-                    new HttpEntity<>(new JwtRequest(jwt)),
-                    UserDetails.class);
+            if (responseEntity.getStatusCode().is2xxSuccessful()) {
+                UserDetailsResponse userDetailsResponse = responseEntity.getBody();
+                if (userDetailsResponse != null) {
+                    UserDetails userDetails = User.builder().username(userDetailsResponse.getEmail()).password("").roles(userDetailsResponse.getRole()).build();
 
-            if (userDetailsResponse.getStatusCode().is2xxSuccessful()) {
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetailsResponse.getBody(), null, userDetailsResponse.getBody().getAuthorities());
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
             }
-        } catch (Exception ex) {
-            System.out.println("Error authenticating user: " + ex.getMessage());
         }
-
-        filterChain.doFilter(request, response);
+        chain.doFilter(request, response);
     }
 
-    private UserDetails verifyJwtToken(String jwtToken) {
-        return restTemplate.getForObject(authServiceUrl + "/"+jwtToken, UserDetails.class);
-
+    private String getJwtFromRequest(HttpServletRequest request) {
+        String bearerToken = request.getHeader("Authorization");
+        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7);
+        }
+        return null;
     }
 }

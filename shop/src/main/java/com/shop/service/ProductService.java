@@ -2,15 +2,12 @@ package com.shop.service;
 
 import com.shop.dto.ProductDto;
 import com.shop.entity.Product;
-import jakarta.annotation.Nullable;
 
 import java.util.List;
 
 public interface ProductService {
 
     void createProduct(ProductDto productRequest, Long shopId);
-
-    void createProduct(ProductDto productRequest);
 
     void updateProduct(Long productId, ProductDto productRequest);
 

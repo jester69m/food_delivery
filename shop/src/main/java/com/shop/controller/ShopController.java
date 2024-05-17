@@ -1,9 +1,14 @@
 package com.shop.controller;
 
 import com.shop.dto.ShopDto;
+import com.shop.entity.Shop;
 import com.shop.service.ShopService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/shop")
@@ -50,6 +55,10 @@ public class ShopController {
     @GetMapping
     public ResponseEntity<?> getAllShops() {
         try{
+            List<Shop> shops = shopService.getAllShops();
+            if(shops.isEmpty()) {
+                return new ResponseEntity<>("No shop present", HttpStatus.NO_CONTENT);
+            }
             return ResponseEntity.ok(shopService.getAllShops());
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -59,6 +68,10 @@ public class ShopController {
     @GetMapping("/{shopId}")
     public ResponseEntity<?> getShopById(@PathVariable Long shopId) {
         try{
+            Optional<Shop> shop = shopService.getShopById(shopId);
+            if(shop.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
             return ResponseEntity.ok(shopService.getShopById(shopId));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
